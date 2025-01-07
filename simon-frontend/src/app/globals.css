@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  --foreground-rgb: 81, 107, 85;
+  --background-start-rgb: 245, 230, 211;
+  --background-end-rgb: 81, 107, 85;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  min-height: 100vh;
+  margin: 0;
+  background: linear-gradient(to bottom,
+      rgb(var(--background-start-rgb)),
+      rgb(var(--background-end-rgb))) fixed;
+}

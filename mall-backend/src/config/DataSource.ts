@@ -1,14 +1,47 @@
 import { config } from 'dotenv';
+import * as fs from 'fs';
 import { DataSource } from 'typeorm';
+import { User, Merchant, Product, ShoppingEvent, EventProduct, Cart, CartItem, Order, OrderItem } from '../entities';
 
-config();
+
+if (fs.existsSync(`.env.${process.env.NODE_ENV}`)) {
+    console.log(`Using .env.${process.env.NODE_ENV} file`);
+    config({ path: `.env.${process.env.NODE_ENV}` });
+} else {
+    console.error(
+        `The .env.${process.env.NODE_ENV} file corresponding to NODE_ENV=${process.env.NODE_ENV} is not found!`,
+    );
+    console.warn('Using default .env file');
+    config();
+}
+
+const host: string = process.env.DB_HOST as string;
+const port: number = parseInt(process.env.DB_PORT as string, 10);
+const username: string = process.env.DB_USERNAME as string;
+const password: string = process.env.DB_PASSWORD as string;
+const database: string = process.env.DB_NAME as string;
+
+
 
 export const AppDataSource = new DataSource({
-    type: 'mongodb',
-    url: 'mongodb://127.0.0.1:27017',
-    synchronize: false,
+    type: 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    username: process.env.DB_USERNAME || 'postgres',
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE || 'SimonMall',
+    synchronize: true,
     logging: false,
-    entities: ['src/entities/**/*.entity.ts'],
-    database: 'SimonMall',
+    entities: [
+        User,
+        Merchant,
+        Product,
+        ShoppingEvent,
+        EventProduct,
+        Cart,
+        CartItem,
+        Order,
+        OrderItem
+    ],
 });
 

@@ -1,12 +1,14 @@
 import 'reflect-metadata';
 import cors from 'cors';
 import express from 'express';
-import { auth, requiresAuth } from 'express-openid-connect';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { AppDataSource } from './config/DataSource';
 import 'express-async-errors';
-
+import userRouter from './feature/user/UserRouter';
+import { clerkMiddleware } from '@clerk/express'
+import 'dotenv/config'
+import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node'
 // 初始化 Express 应用
 const app = express();
 
@@ -15,29 +17,14 @@ app.use(morgan('dev'));  // 日志中间件放在最前面
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
+app.use(clerkMiddleware())
 
-// 认证配置（如果需要的话）
-// const authConfig = {
-//     authRequired: false,
-//     auth0Logout: true,
-//     // ... 其他 auth0 配置
-// };
-// app.use(auth(authConfig));
 
-// 请求日志中间件
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
-});
 
 // API 路由
 // app.use('/api/v1/users', userRouter);
 // app.use('/api/v1/posts', postRouter);
-
-// 健康检查端点
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date() });
-});
+app.use('/api/v1/users', userRouter);
 
 // 全局错误处理
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -49,7 +36,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // 服务器配置
-const PORT = process.env.PORT || process.env.ASB_WEB_PORT || 3000;
+const PORT = process.env.PORT || process.env.ASB_WEB_PORT || 3001;
 
 // 数据库初始化和服务器启动
 async function startServer() {

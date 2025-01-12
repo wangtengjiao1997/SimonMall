@@ -2,26 +2,37 @@
 import Link from 'next/link'
 import { SignInButton, useUser, UserButton, useAuth } from '@clerk/nextjs'
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Navbar() {
     const { user, isLoaded } = useUser()
     const { getToken } = useAuth()
+    const router = useRouter()
 
     useEffect(() => {
         if (user) {
-            // 获取 JWT token
             const initUser = async () => {
                 try {
                     const token = await getToken()
-                    console.log('JWT Token:', token)
+                    // 检查用户信息
+                    const response = await fetch('http://localhost:3001/api/v1/users/checkUserProfile', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    })
+                    const data = await response.json()
+                    
+                    if (data.success && !data.data.exists) {
+                        router.push('/register')
+                    }
                 } catch (error) {
-                    console.error('获取 token 失败:', error)
+                    console.error('获取用户信息失败:', error)
                 }
             }
 
             initUser()
         }
-    }, [user, getToken])
+    }, [user, getToken, router])
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50">
@@ -47,15 +58,6 @@ export default function Navbar() {
                             <Link href="/about" className="hover:opacity-70 transition-opacity tracking-wider">
                                 ABOUT
                             </Link>
-                        </li>
-                        <li>
-                            <button onClick={async () => {
-                                fetch('http://localhost:3001/api/v1/users/test1', {
-                                    headers: { Authorization: `Bearer ${await getToken()}` },
-                                }).then((res) => console.log(res.json()))
-                            }}>
-                                test
-                            </button>
                         </li>
                     </ul>
                 </nav>

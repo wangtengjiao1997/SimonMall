@@ -1,34 +1,14 @@
-import express, { NextFunction, Request, Response } from 'express';
-import { Result } from '../../utils/Result';
-import { clerkClient, requireAuth } from '@clerk/express'
-import 'dotenv/config'
-
+import express, { RequestHandler } from 'express';
+import { requireAuth } from '@clerk/express';
+import { checkUserProfile, createUser, deleteUser, getUsersInfo, updateUser } from './UserController';
 
 const userRouter = express.Router();
 
+userRouter.get('/checkUserProfile', requireAuth(), checkUserProfile);
 
-userRouter.get('/test1', requireAuth(), async (req, res) => {
-    try {
-        const mockData = {
-            message: "You are authenticated!",
-            user: {
-                id: 1,
-                name: "测试用户",
-                email: "test@example.com",
-                role: "user",
-                createdAt: new Date().toISOString()
-            },
-            stats: {
-                loginCount: 10,
-                lastLogin: new Date().toISOString()
-            }
-        };
-
-        res.json(Result.success(mockData));
-    } catch (error) {
-        res.status(500).json(Result.error(error.message));
-    }
-});
-
+userRouter.post('/createUserInfo', requireAuth(), createUser);
+userRouter.put('/updateUserInfo', requireAuth(), updateUser);
+userRouter.delete('/deleteUserInfo', requireAuth(), deleteUser);
+userRouter.get('/getUserInfo', requireAuth(), getUsersInfo);
 
 export default userRouter;

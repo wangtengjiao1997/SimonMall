@@ -25,6 +25,7 @@
     "morgan": "^1.10.0",
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
+    "simonmall": "file:",
     "typeorm": "^0.3.20"
   },
   "devDependencies": {

@@ -8,11 +8,8 @@ export enum UserRole {
 
 @Entity('user')
 export class User extends BaseEntity {
-    @PrimaryColumn({ name: 'user_id', type: 'varchar' })
+    @PrimaryColumn({ name: 'user_id' })
     userId: string;
-
-    @Column({ name: 'clerk_id', type: 'varchar', unique: true })
-    clerkId: string;
 
     @Column({ name: 'username', type: 'varchar' })
     username: string;

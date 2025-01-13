@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { SignInButton, useUser, UserButton, useAuth } from '@clerk/nextjs'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import UserMenu from '../UserMenu'
 
 export default function Navbar() {
     const { user, isLoaded } = useUser()
@@ -14,6 +15,7 @@ export default function Navbar() {
             const initUser = async () => {
                 try {
                     const token = await getToken()
+                    console.log(token)
                     // 检查用户信息
                     const response = await fetch('http://localhost:3001/api/v1/users/checkUserProfile', {
                         headers: {
@@ -21,7 +23,7 @@ export default function Navbar() {
                         }
                     })
                     const data = await response.json()
-                    
+
                     if (data.success && !data.data.exists) {
                         router.push('/register')
                     }
@@ -35,23 +37,18 @@ export default function Navbar() {
     }, [user, getToken, router])
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50">
+        <header className="fixed top-0 left-0 right-0 z-50" style={{ '--header-height': '80px' } as React.CSSProperties}>
             <div className="container mx-auto flex justify-between items-center p-6">
                 <nav className="backdrop-blur-[2px]">
                     <ul className="flex flex-wrap justify-center md:justify-start gap-8 md:gap-16 text-[#516b55] font-light text-base md:text-lg">
                         <li>
+                            <Link href="/" className="hover:opacity-70 transition-opacity tracking-wider">
+                                此处应该有个图标
+                            </Link>
+                        </li>
+                        <li>
                             <Link href="/shop" className="hover:opacity-70 transition-opacity tracking-wider">
                                 SHOP
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/about" className="hover:opacity-70 transition-opacity tracking-wider">
-                                ABOUT
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/stockists" className="hover:opacity-70 transition-opacity tracking-wider">
-                                STOCKISTS
                             </Link>
                         </li>
                         <li>
@@ -64,10 +61,13 @@ export default function Navbar() {
                 {isLoaded && (
                     user ? (
                         <div className="flex items-center gap-4">
-                            <span className="text-[#516b55]">
-                                {user.firstName || user.emailAddresses[0].emailAddress}
-                            </span>
-                            <UserButton afterSignOutUrl="/" />
+                            <Link
+                                href="/merchant/dashboard"
+                                className="px-4 py-2 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded-md transition-all duration-300 border border-[#516b55]"
+                            >
+                                商家中心
+                            </Link>
+                            <UserMenu />
                         </div>
                     ) : (
                         <SignInButton mode="modal">

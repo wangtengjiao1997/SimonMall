@@ -8,14 +8,13 @@ interface FormData {
     email: string;
     phoneCountry: string;
     phone: string;
-    address: string;
+    address: string[];
 }
 
 interface FormErrors {
     username?: string;
     email?: string;
     phone?: string;
-    address?: string;
 }
 
 // 常用国家代码
@@ -32,9 +31,9 @@ export default function Register() {
     const [formData, setFormData] = useState<FormData>({
         username: '',
         email: '',
-        phoneCountry: '+86', // 默认中国
+        phoneCountry: '+86',
         phone: '',
-        address: ''
+        address: ['']
     })
     const [errors, setErrors] = useState<FormErrors>({})
     const { user } = useUser()
@@ -43,11 +42,6 @@ export default function Register() {
 
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {}
-
-        // 用户名验证：2-20个字符
-        if (!formData.username || formData.username.length < 2 || formData.username.length > 20) {
-            newErrors.username = '用户名必须在2-20个字符之间'
-        }
 
         // 邮箱验证
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -58,7 +52,7 @@ export default function Register() {
         // 电话号码验证
         if (formData.phone) {
             let isValid = false
-            const phoneNumber = formData.phone.replace(/\s+/g, '') // 移除空格
+            const phoneNumber = formData.phone.replace(/\s+/g, '')
 
             switch (formData.phoneCountry) {
                 case '+86': // 中国
@@ -68,17 +62,12 @@ export default function Register() {
                     isValid = /^\d{10}$/.test(phoneNumber)
                     break
                 default: // 其他国家
-                    isValid = /^\d{6,15}$/.test(phoneNumber) // 通用验证：6-15位数字
+                    isValid = /^\d{6,15}$/.test(phoneNumber)
             }
 
             if (!isValid) {
                 newErrors.phone = '请输入有效的电话号码'
             }
-        }
-
-        // 地址验证：最少5个字符
-        if (formData.address && formData.address.length < 5) {
-            newErrors.address = '地址至少需要5个字符'
         }
 
         setErrors(newErrors)
@@ -93,13 +82,36 @@ export default function Register() {
         }))
     }
 
+    const handleAddressChange = (index: number, value: string) => {
+        const newAddresses = [...formData.address]
+        newAddresses[index] = value
+        setFormData(prev => ({
+            ...prev,
+            address: newAddresses
+        }))
+    }
+
+    const handleAddNewAddress = () => {
+        setFormData(prev => ({
+            ...prev,
+            address: [...prev.address, '']
+        }))
+    }
+
+    const handleRemoveAddress = (index: number) => {
+        if (formData.address.length > 1) {
+            setFormData(prev => ({
+                ...prev,
+                address: prev.address.filter((_, i) => i !== index)
+            }))
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        
         if (!validateForm()) {
             return
         }
-
         try {
             const token = await getToken()
             const response = await fetch('http://localhost:3001/api/v1/users/createUserInfo', {
@@ -110,13 +122,12 @@ export default function Register() {
                 },
                 body: JSON.stringify({
                     ...formData,
-                    // 合并国家代码和电话号码
                     phone: formData.phone ? `${formData.phoneCountry}${formData.phone}` : ''
                 })
             })
 
             if (response.ok) {
-                router.push('/dashboard')
+                router.push('/')
             } else {
                 const data = await response.json()
                 throw new Error(data.message || '提交失败')
@@ -181,18 +192,41 @@ export default function Register() {
 
                     <div>
                         <label className="block text-[#516b55] mb-2">
-                            地址
+                            收货地址 (可选)
                         </label>
-                        <textarea
-                            name="address"
-                            value={formData.address}
-                            onChange={handleChange}
-                            className={`w-full p-2 border rounded ${errors.address ? 'border-red-500' : 'border-[#516b55]'}`}
-                            rows={3}
-                        />
-                        {errors.address && (
-                            <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-                        )}
+                        <div className="space-y-3">
+                            {formData.address.map((address, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={address}
+                                        onChange={(e) => handleAddressChange(index, e.target.value)}
+                                        className="flex-1 p-2 border border-[#516b55] rounded"
+                                        placeholder={`收货地址 ${index + 1}`}
+                                    />
+                                    {formData.address.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveAddress(index)}
+                                            className="px-2 text-red-500 hover:text-red-700"
+                                        >
+                                            删除
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                onClick={handleAddNewAddress}
+                                className="text-[#516b55] hover:text-[#3f523f] text-sm flex items-center gap-1"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                新增收货地址
+                            </button>
+                        </div>
                     </div>
 
                     <button
@@ -205,4 +239,4 @@ export default function Register() {
             </div>
         </div>
     )
-} 
+}

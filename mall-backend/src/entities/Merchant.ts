@@ -1,28 +1,23 @@
-import { Entity, PrimaryColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { BaseEntity } from './BaseEntity';
-import { User } from './User';
 
 @Entity('merchant')
 export class Merchant extends BaseEntity {
-    @PrimaryColumn({ name: 'merchant_id', type: 'varchar' })
+    @PrimaryGeneratedColumn('uuid', { name: 'merchant_id' })
     merchantId: string;
 
     @Column({ name: 'user_id', type: 'varchar' })
     userId: string;
 
-    @OneToOne(() => User)
-    @JoinColumn({ name: 'user_id' })
-    user: User;
-
     @Column({ name: 'shop_name', type: 'varchar' })
     shopName: string;
 
-    @Column({ name: 'shop_description', type: 'text' })
+    @Column({ name: 'shop_description', type: 'text', nullable: true })
     shopDescription: string;
 
-    @Column({ name: 'shop_status', type: 'text' })
+    @Column({ name: 'shop_status', type: 'varchar', default: 'pending' })
     shopStatus: string;
 
-    @Column({ name: 'shop_category', type: 'text' })
+    @Column({ name: 'shop_category', type: 'varchar' })
     shopCategory: string;
 }

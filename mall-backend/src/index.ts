@@ -9,6 +9,8 @@ import userRouter from './feature/user/UserRouter';
 import { clerkMiddleware } from '@clerk/express'
 import 'dotenv/config'
 import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node'
+import merchantRouter from './feature/merchant/MerchantRouter';
+import productRouter from './feature/product/ProductRouter';
 // 初始化 Express 应用
 const app = express();
 
@@ -25,6 +27,8 @@ app.use(clerkMiddleware())
 // app.use('/api/v1/users', userRouter);
 // app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/merchants', merchantRouter);
+app.use('/api/v1/products', productRouter);
 
 // 全局错误处理
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

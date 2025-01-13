@@ -20,8 +20,8 @@ export class User extends BaseEntity {
     @Column({ name: 'phone', type: 'varchar', nullable: true })
     phone: string;
 
-    @Column({ name: 'address', type: 'text', nullable: true })
-    address: string;
+    @Column('text', { name: 'address', array: true, nullable: true })
+    address: string[];
 
     @Column({ name: 'role', type: 'enum', enum: UserRole, default: UserRole.BUYER })
     role: UserRole;

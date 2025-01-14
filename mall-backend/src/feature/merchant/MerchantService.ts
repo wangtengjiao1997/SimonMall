@@ -5,10 +5,11 @@ import { AppDataSource } from '../../config/DataSource';
 const merchantRepository = AppDataSource.getRepository(Merchant);
 const productRepository = AppDataSource.getRepository(Product);
 
-export const createMerchantService = async (merchantData: DeepPartial<Merchant>) => {
+export const createMerchantService = async (merchantData: DeepPartial<Merchant>, userId: string) => {
     // 创建新商家
     const merchant = merchantRepository.create({
         ...merchantData,
+        userId: userId,
         shopStatus: 'pending' // 默认状态为待审核
     });
 

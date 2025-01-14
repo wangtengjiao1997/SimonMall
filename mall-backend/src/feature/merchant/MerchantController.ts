@@ -9,10 +9,11 @@ import {
     getMerchantByUserIdService
 } from './MerchantService';
 import { AuthRequest } from 'src/types/express';
-export const createMerchant = async (req: Request, res: Response) => {
+export const createMerchant = async (req: AuthRequest, res: Response) => {
     try {
         const merchantData = req.body;
-        const merchant = await createMerchantService(merchantData);
+        const userId = req.auth.userId;
+        const merchant = await createMerchantService(merchantData, userId);
         res.json(Result.success(merchant, '商家创建成功'));
     } catch (error) {
         res.status(400).json(Result.error(error.message));

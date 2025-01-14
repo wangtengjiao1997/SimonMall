@@ -103,24 +103,26 @@ export default function ShopDetail() {
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-6">商品列表</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {merchantInfo.products.map((product) => (
-                            <div
-                                key={product.productId}
-                                className="flex gap-4 p-4 border rounded hover:shadow-md transition-shadow"
-                            >
-                                <img
-                                    src={product.imageUrl}
-                                    alt={product.name}
-                                    className="w-24 h-24 object-cover rounded"
-                                />
-                                <div>
-                                    <h3 className="font-medium text-lg">{product.name}</h3>
-                                    <p className="text-gray-500 text-sm mt-1">{product.description}</p>
-                                    <p className="text-[#516b55] font-medium mt-2">¥{product.price}</p>
-                                    <p className="text-gray-400 text-xs mt-1">分类：{product.category}</p>
+                        {merchantInfo.products
+                            .sort((a, b) => a.rank - b.rank)
+                            .map((product) => (
+                                <div
+                                    key={product.productId}
+                                    className="flex gap-4 p-4 border rounded hover:shadow-md transition-shadow"
+                                >
+                                    <img
+                                        src={product.imageUrl}
+                                        alt={product.name}
+                                        className="w-24 h-24 object-cover rounded"
+                                    />
+                                    <div>
+                                        <h3 className="font-medium text-lg">{product.name}</h3>
+                                        <p className="text-gray-500 text-sm mt-1">{product.description}</p>
+                                        <p className="text-[#516b55] font-medium mt-2">¥{product.price}</p>
+                                        <p className="text-gray-400 text-xs mt-1">分类：{product.category}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
                     </div>
 
                     {merchantInfo.products.length === 0 && (

@@ -1,14 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/nextjs'
+import { MerchantInfo } from '@/model/merchant'
 
-interface MerchantInfo {
-    merchantId?: string;
-    shopName: string;
-    shopDescription: string;
-    shopCategory: string;
-    shopStatus: string;
-}
 
 interface MerchantModalProps {
     isOpen: boolean;
@@ -39,7 +33,8 @@ export default function MerchantModal({
             setFormData({
                 shopName: merchant.shopName,
                 shopDescription: merchant.shopDescription,
-                shopCategory: merchant.shopCategory
+                shopCategory: merchant.shopCategory,
+                shopStatus: merchant.shopStatus
             })
         }
     }, [merchant, mode])
@@ -58,11 +53,12 @@ export default function MerchantModal({
             const requestData = mode === 'create'
                 ? {
                     ...formData,
-                    userId: 'user_2rQaTRxYkNbITQ7mhjSfB4zXKky' // 这里应该从 Clerk 获取用户 ID
                 }
                 : {
                     shopName: formData.shopName,
-                    shopDescription: formData.shopDescription
+                    shopDescription: formData.shopDescription,
+                    shopCategory: formData.shopCategory,
+                    shopStatus: formData.shopStatus
                 }
 
             const response = await fetch(url, {
@@ -153,6 +149,35 @@ export default function MerchantModal({
                             <option value="electronics">电子产品</option>
                             <option value="other">其他</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="block mb-1 mt-4 text-sm font-medium text-gray-700">
+                            店铺状态
+                        </label>
+                        <div className="flex p-2 items-center justify-between">
+                            <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({
+                                    ...prev,
+                                    shopStatus: prev.shopStatus === 'active' ? 'pending' : 'active'
+                                }))}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.shopStatus === 'active'
+                                    ? 'bg-[#516b55]'
+                                    : 'bg-gray-300'
+                                    }`}
+                            >
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.shopStatus === 'active'
+                                        ? 'translate-x-6'
+                                        : 'translate-x-1'
+                                        }`}
+                                />
+                            </button>
+                            <span className="text-sm text-gray-500">
+                                {formData.shopStatus === 'active' ? '营业中' : '暂停营业'}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-2 mt-6">

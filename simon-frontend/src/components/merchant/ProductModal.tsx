@@ -1,16 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@clerk/nextjs'
+import ImageUpload from '@/components/common/ImageUpload'
+import { useFileUpload } from '@/hook/useFileUpload'
+import { Product } from '@/model/product'
 
-interface Product {
-    productId?: string;
-    name: string;
-    description: string;
-    price: number;
-    category: string;
-    imageUrl: string;
-    rank: number;
-}
 
 interface ProductModalProps {
     isOpen: boolean;
@@ -19,6 +13,7 @@ interface ProductModalProps {
     merchantId: string;
     product?: Product; // 如果是编辑模式，传入现有商品数据
     mode: 'create' | 'edit';
+    productsCount?: number; // 添加商品数量属性
 }
 
 export default function ProductModal({
@@ -27,7 +22,8 @@ export default function ProductModal({
     onSuccess,
     merchantId,
     product,
-    mode
+    mode,
+    productsCount = 0 // 设置默认值
 }: ProductModalProps) {
     const [formData, setFormData] = useState<Omit<Product, 'productId'>>({
         name: '',
@@ -35,8 +31,9 @@ export default function ProductModal({
         price: 0,
         category: 'food',
         imageUrl: '',
-        rank: 0
+        rank: productsCount + 1 // 设置初始 rank 值
     })
+    const { imageUrl, uploading, handleUpload, error } = useFileUpload()
     const [loading, setLoading] = useState(false)
     const { getToken } = useAuth()
 
@@ -53,6 +50,12 @@ export default function ProductModal({
         }
     }, [product, mode])
 
+    useEffect(() => {
+        if (imageUrl) {
+            setFormData(prev => ({ ...prev, imageUrl }))
+        }
+    }, [imageUrl])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
@@ -67,7 +70,8 @@ export default function ProductModal({
                 ? {
                     ...formData,
                     merchantId,
-                    price: Number(formData.price)
+                    price: Number(formData.price),
+                    rank: productsCount + 1 // 确保使用最新的 rank 值
                 }
                 : {
                     ...formData,
@@ -93,7 +97,7 @@ export default function ProductModal({
                         price: 0,
                         category: 'food',
                         imageUrl: '',
-                        rank: 0
+                        rank: productsCount + 1
                     })
                 }
             }
@@ -158,7 +162,7 @@ export default function ProductModal({
                             type="number"
                             step="0.01"
                             value={formData.price}
-                            onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                            onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
                             className="w-full p-2 border rounded focus:outline-none focus:ring-1 focus:ring-[#516b55]"
                             required
                         />
@@ -182,14 +186,14 @@ export default function ProductModal({
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            商品图片URL
+                            商品图片
                         </label>
-                        <input
-                            type="url"
-                            value={formData.imageUrl}
-                            onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                            className="w-full p-2 border rounded focus:outline-none focus:ring-1 focus:ring-[#516b55]"
-                            required
+                        <ImageUpload
+                            imageUrl={formData.imageUrl}
+                            onUpload={handleUpload}
+                            uploading={uploading}
+                            error={error}
+                            className="w-full"
                         />
                     </div>
 

@@ -1,12 +1,22 @@
 'use client'
 import Link from 'next/link'
 import { SignInButton, useUser, UserButton, useAuth } from '@clerk/nextjs'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import UserMenu from '../UserMenu'
-
+interface User {
+    userId: string,
+    username: string,
+    email: string,
+    role: string,
+    phone: string,
+    address: string,
+    createdAt: string,
+    updatedAt: string,
+}
 export default function Navbar() {
     const { user, isLoaded } = useUser()
+    const [userinfo, setUserinfo] = useState<User | null>(null)
     const { getToken } = useAuth()
     const router = useRouter()
 
@@ -22,8 +32,10 @@ export default function Navbar() {
                             'Authorization': `Bearer ${token}`
                         }
                     })
-                    const data = await response.json()
 
+                    const data = await response.json()
+                    console.log(data)
+                    setUserinfo(data.data.user)
                     if (data.success && !data.data.exists) {
                         router.push('/register')
                     }
@@ -60,15 +72,20 @@ export default function Navbar() {
                 </nav>
                 {isLoaded && (
                     user ? (
-                        <div className="flex items-center gap-4">
-                            <Link
-                                href="/merchant/dashboard"
-                                className="px-4 py-2 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded-md transition-all duration-300 border border-[#516b55]"
-                            >
-                                商家中心
-                            </Link>
-                            <UserMenu />
-                        </div>
+                        userinfo?.role === 'merchant' ? (
+                            <div className="flex items-center gap-4">
+                                <Link
+                                    href="/merchant/dashboard"
+                                    className="px-4 py-2 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded-md transition-all duration-300 border border-[#516b55]"
+                                >
+                                    商家中心
+                                </Link>
+                                <UserMenu />
+                            </div>) : (
+                            <div className="flex items-center gap-4">
+                                <UserMenu />
+                            </div>
+                        )
                     ) : (
                         <SignInButton mode="modal">
                             <button className="px-4 py-2 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded-md transition-all duration-300 border border-[#516b55]">

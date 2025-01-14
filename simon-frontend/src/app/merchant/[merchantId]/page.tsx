@@ -4,18 +4,7 @@ import { useAuth } from '@clerk/nextjs'
 import { useRouter, useParams } from 'next/navigation'
 import ProductModal from '@/components/merchant/ProductModal'
 import MerchantModal from '@/components/merchant/MerchantModal'
-
-interface Product {
-    productId: string;
-    name: string;
-    description: string;
-    price: string;
-    category: string;
-    imageUrl: string;
-    rank: number;
-    createdAt: string;
-    updatedAt: string;
-}
+import { Product } from '@/model/product'
 
 interface MerchantInfo {
     merchantId: string;
@@ -28,6 +17,8 @@ interface MerchantInfo {
 
 export default function MerchantDetail() {
     const [merchantInfo, setMerchantInfo] = useState<MerchantInfo | null>(null)
+    const [products, setProducts] = useState<Product[]>([])
+    const [hasChanges, setHasChanges] = useState(false)
     const [loading, setLoading] = useState(true)
     const { getToken } = useAuth()
     const router = useRouter()
@@ -43,6 +34,54 @@ export default function MerchantDetail() {
             fetchMerchantInfo()
         }
     }, [merchantId])
+
+    useEffect(() => {
+        if (merchantInfo) {
+            const sortedProducts = [...merchantInfo.products].sort((a, b) => a.rank - b.rank)
+            setProducts(sortedProducts)
+        }
+    }, [merchantInfo])
+
+    useEffect(() => {
+        const saveChanges = async () => {
+            if (hasChanges) {
+                try {
+                    const token = await getToken()
+                    const updatePromises = products.map((product, index) =>
+                        fetch(`http://localhost:3001/api/v1/products/updateProduct/${product.productId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                rank: index + 1
+                            })
+                        })
+                    )
+
+                    await Promise.all(updatePromises)
+                    setHasChanges(false)
+                } catch (error) {
+                    console.error('保存排序失败:', error)
+                }
+            }
+        }
+
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (hasChanges) {
+                saveChanges()
+                e.preventDefault()
+            }
+        }
+
+        window.addEventListener('beforeunload', handleBeforeUnload)
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload)
+            saveChanges()
+        }
+    }, [hasChanges, products])
 
     const fetchMerchantInfo = async () => {
         try {
@@ -91,6 +130,28 @@ export default function MerchantDetail() {
         setProductModalMode('edit')
         setEditingProduct(product)
         setIsProductModalOpen(true)
+    }
+
+    const handleMoveProduct = (productId: string, direction: 'up' | 'down') => {
+        const currentIndex = products.findIndex(p => p.productId === productId)
+        if (currentIndex === -1) return
+
+        const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+
+        if (targetIndex < 0 || targetIndex >= products.length) return
+
+        const newProducts = [...products]
+        const temp = newProducts[currentIndex]
+        newProducts[currentIndex] = newProducts[targetIndex]
+        newProducts[targetIndex] = temp
+
+        const updatedProducts = newProducts.map((product, index) => ({
+            ...product,
+            rank: index + 1
+        }))
+
+        setProducts(updatedProducts)
+        setHasChanges(true)
     }
 
     if (loading) {
@@ -163,12 +224,26 @@ export default function MerchantDetail() {
                     </div>
 
                     <div className="grid gap-4">
-                        {merchantInfo.products.map((product) => (
+                        {products.map((product, index) => (
                             <div
                                 key={product.productId}
                                 className="flex items-center justify-between p-4 border rounded hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-center gap-4">
+                                    <div className="flex flex-col gap-1">
+                                        <button
+                                            onClick={() => handleMoveProduct(product.productId!, 'up')}
+                                            disabled={index === 0}
+                                        >
+                                            ↑
+                                        </button>
+                                        <button
+                                            onClick={() => handleMoveProduct(product.productId!, 'down')}
+                                            disabled={index === products.length - 1}
+                                        >
+                                            ↓
+                                        </button>
+                                    </div>
                                     <img
                                         src={product.imageUrl}
                                         alt={product.name}
@@ -189,7 +264,7 @@ export default function MerchantDetail() {
                                         编辑
                                     </button>
                                     <button
-                                        onClick={() => handleDeleteProduct(product.productId)}
+                                        onClick={() => product.productId && handleDeleteProduct(product.productId)}
                                         className="px-3 py-1 text-red-600 hover:bg-red-600 hover:text-white rounded border border-red-600 transition-colors"
                                     >
                                         删除
@@ -198,7 +273,7 @@ export default function MerchantDetail() {
                             </div>
                         ))}
 
-                        {merchantInfo.products.length === 0 && (
+                        {products.length === 0 && (
                             <div className="text-center py-8 bg-gray-50 rounded">
                                 <p className="text-gray-500">暂无商品</p>
                                 <button
@@ -223,6 +298,7 @@ export default function MerchantDetail() {
                 merchantId={merchantId}
                 product={editingProduct}
                 mode={productModalMode}
+                productsCount={products.length}
             />
 
             <MerchantModal
@@ -235,6 +311,12 @@ export default function MerchantDetail() {
                 merchant={merchantInfo}
                 mode="edit"
             />
+
+            {hasChanges && (
+                <div className="fixed bottom-4 right-4 bg-[#516b55] text-white px-4 py-2 rounded shadow-lg">
+                    排序已更改，离开页面时将自动保存
+                </div>
+            )}
         </div>
     )
 }

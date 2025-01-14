@@ -40,8 +40,8 @@ export default function MerchantCard({ merchant, onClick }: MerchantCardProps) {
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-medium text-gray-900">{merchant.shopName}</h3>
                             <span className={`text-xs px-2 py-1 rounded ${merchant.shopStatus === 'active'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-yellow-100 text-yellow-800'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
                                 }`}>
                                 {merchant.shopStatus === 'active' ? '营业中' : '审核中'}
                             </span>
@@ -57,19 +57,22 @@ export default function MerchantCard({ merchant, onClick }: MerchantCardProps) {
                 {merchant.products && merchant.products.length > 0 && (
                     <div className="mt-4">
                         <div className="grid grid-cols-3 gap-2">
-                            {merchant.products.slice(0, 3).map((product) => (
-                                <div key={product.productId} className="relative aspect-square rounded-md overflow-hidden">
-                                    <img
-                                        src={product.imageUrl}
-                                        alt={product.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1">
-                                        <div className="truncate">{product.name}</div>
-                                        <div>¥{product.price}</div>
+                            {merchant.products
+                                .sort((a, b) => a.rank - b.rank)
+                                .slice(0, 3)
+                                .map((product) => (
+                                    <div key={product.productId} className="relative aspect-square rounded-md overflow-hidden">
+                                        <img
+                                            src={product.imageUrl}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1">
+                                            <div className="truncate">{product.name}</div>
+                                            <div>¥{product.price}</div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     </div>
                 )}

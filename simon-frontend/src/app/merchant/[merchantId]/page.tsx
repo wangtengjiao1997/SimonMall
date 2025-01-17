@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter, useParams } from 'next/navigation'
+import anime from 'animejs'
 import ProductModal from '@/components/merchant/ProductModal'
 import MerchantModal from '@/components/merchant/MerchantModal'
 import { Product } from '@/model/product'
@@ -14,6 +15,8 @@ interface MerchantInfo {
     shopCategory: string;
     products: Product[];
 }
+
+type TabType = 'products' | 'orders' | 'new-order'
 
 export default function MerchantDetail() {
     const [merchantInfo, setMerchantInfo] = useState<MerchantInfo | null>(null)
@@ -28,6 +31,7 @@ export default function MerchantDetail() {
     const [editingProduct, setEditingProduct] = useState<Product | undefined>()
     const [productModalMode, setProductModalMode] = useState<'create' | 'edit'>('create')
     const [isMerchantModalOpen, setIsMerchantModalOpen] = useState(false)
+    const [activeTab, setActiveTab] = useState<TabType>('products')
 
     useEffect(() => {
         if (merchantId) {
@@ -154,6 +158,26 @@ export default function MerchantDetail() {
         setHasChanges(true)
     }
 
+    const handleTabChange = (tab: TabType) => {
+        anime({
+            targets: '.tab-content',
+            opacity: [1, 0],
+            translateY: [0, 20],
+            duration: 200,
+            easing: 'easeInOutQuad',
+            complete: () => {
+                setActiveTab(tab)
+                anime({
+                    targets: '.tab-content',
+                    opacity: [0, 1],
+                    translateY: [20, 0],
+                    duration: 300,
+                    easing: 'easeOutQuad'
+                })
+            }
+        })
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen pt-20 px-4 flex items-center justify-center">
@@ -183,108 +207,169 @@ export default function MerchantDetail() {
 
     return (
         <div className="min-h-screen pt-20 px-4">
-            <div className="max-w-4xl mx-auto">
-                {/* 店铺基本信息 */}
+            <div className="max-w-6xl mx-auto">
+                {/* 店铺信息卡片 */}
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <h1 className="text-2xl font-semibold text-gray-900">{merchantInfo.shopName}</h1>
-                            <p className="text-gray-500 mt-2">{merchantInfo.shopDescription}</p>
-                            <div className="flex items-center gap-4 mt-2">
-                                <span className="text-sm text-gray-500">
-                                    分类：{merchantInfo.shopCategory}
-                                </span>
-                                <span className={`px-2 py-1 rounded text-sm ${merchantInfo.shopStatus === 'active'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                    }`}>
-                                    {merchantInfo.shopStatus === 'active' ? '营业中' : '审核中'}
-                                </span>
-                            </div>
+                            <h1 className="text-2xl font-semibold text-[#516b55]">{merchantInfo?.shopName}</h1>
+                            <p className="text-gray-500 mt-2">{merchantInfo?.shopDescription}</p>
                         </div>
-                        <button
-                            onClick={() => setIsMerchantModalOpen(true)}
-                            className="px-4 py-2 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded border border-[#516b55] transition-colors"
-                        >
-                            编辑店铺
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setIsMerchantModalOpen(true)}
+                                className="px-4 py-2 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded border border-[#516b55] transition-colors"
+                            >
+                                编辑店铺
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* 商品列表 */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">商品列表</h2>
-                        <button
-                            onClick={handleAddProduct}
-                            className="px-4 py-2 bg-[#516b55] text-white rounded hover:bg-[#3f523f] transition-colors"
-                        >
-                            添加商品
-                        </button>
-                    </div>
+                {/* 标签页导航 */}
+                <div className="flex border-b mb-6">
+                    <button
+                        onClick={() => handleTabChange('products')}
+                        className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'products'
+                                ? 'text-[#516b55]'
+                                : 'text-gray-500 hover:text-[#516b55]'
+                            }`}
+                    >
+                        商品管理
+                        {activeTab === 'products' && (
+                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#516b55]" />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('orders')}
+                        className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'orders'
+                                ? 'text-[#516b55]'
+                                : 'text-gray-500 hover:text-[#516b55]'
+                            }`}
+                    >
+                        历史订单
+                        {activeTab === 'orders' && (
+                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#516b55]" />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('new-order')}
+                        className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'new-order'
+                                ? 'text-[#516b55]'
+                                : 'text-gray-500 hover:text-[#516b55]'
+                            }`}
+                    >
+                        创建订单
+                        {activeTab === 'new-order' && (
+                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#516b55]" />
+                        )}
+                    </button>
+                </div>
 
-                    <div className="grid gap-4">
-                        {products.map((product, index) => (
-                            <div
-                                key={product.productId}
-                                className="flex items-center justify-between p-4 border rounded hover:shadow-md transition-shadow"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="flex flex-col gap-1">
-                                        <button
-                                            onClick={() => handleMoveProduct(product.productId!, 'up')}
-                                            disabled={index === 0}
-                                        >
-                                            ↑
-                                        </button>
-                                        <button
-                                            onClick={() => handleMoveProduct(product.productId!, 'down')}
-                                            disabled={index === products.length - 1}
-                                        >
-                                            ↓
-                                        </button>
-                                    </div>
-                                    <img
-                                        src={product.imageUrl}
-                                        alt={product.name}
-                                        className="w-20 h-20 object-cover rounded"
-                                    />
-                                    <div>
-                                        <h3 className="font-medium text-lg">{product.name}</h3>
-                                        <p className="text-gray-500 text-sm mt-1">{product.description}</p>
-                                        <p className="text-[#516b55] font-medium mt-1">¥{product.price}</p>
-                                        <p className="text-gray-400 text-xs mt-1">分类：{product.category}</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => handleEditProduct(product)}
-                                        className="px-3 py-1 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded border border-[#516b55] transition-colors"
-                                    >
-                                        编辑
-                                    </button>
-                                    <button
-                                        onClick={() => product.productId && handleDeleteProduct(product.productId)}
-                                        className="px-3 py-1 text-red-600 hover:bg-red-600 hover:text-white rounded border border-red-600 transition-colors"
-                                    >
-                                        删除
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-
-                        {products.length === 0 && (
-                            <div className="text-center py-8 bg-gray-50 rounded">
-                                <p className="text-gray-500">暂无商品</p>
+                {/* 标签页内容 */}
+                <div className="tab-content">
+                    {activeTab === 'products' && (
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            {/* 商品列表 */}
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-semibold text-gray-900">商品列表</h2>
                                 <button
                                     onClick={handleAddProduct}
-                                    className="mt-4 px-4 py-2 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded border border-[#516b55] transition-colors"
+                                    className="px-4 py-2 bg-[#516b55] text-white rounded hover:bg-[#3f523f] transition-colors"
                                 >
                                     添加商品
                                 </button>
                             </div>
-                        )}
-                    </div>
+
+                            <div className="grid gap-4">
+                                {products.map((product, index) => (
+                                    <div
+                                        key={product.productId}
+                                        className="flex items-center justify-between p-4 border rounded hover:shadow-md transition-shadow"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex flex-col gap-1">
+                                                <button
+                                                    onClick={() => handleMoveProduct(product.productId!, 'up')}
+                                                    disabled={index === 0}
+                                                >
+                                                    ↑
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMoveProduct(product.productId!, 'down')}
+                                                    disabled={index === products.length - 1}
+                                                >
+                                                    ↓
+                                                </button>
+                                            </div>
+                                            <img
+                                                src={product.imageUrl}
+                                                alt={product.name}
+                                                className="w-20 h-20 object-cover rounded"
+                                            />
+                                            <div>
+                                                <h3 className="font-medium text-lg">{product.name}</h3>
+                                                <p className="text-gray-500 text-sm mt-1">{product.description}</p>
+                                                <p className="text-[#516b55] font-medium mt-1">¥{product.price}</p>
+                                                <p className="text-gray-400 text-xs mt-1">分类：{product.category}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleEditProduct(product)}
+                                                className="px-3 py-1 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded border border-[#516b55] transition-colors"
+                                            >
+                                                编辑
+                                            </button>
+                                            <button
+                                                onClick={() => product.productId && handleDeleteProduct(product.productId)}
+                                                className="px-3 py-1 text-red-600 hover:bg-red-600 hover:text-white rounded border border-red-600 transition-colors"
+                                            >
+                                                删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {products.length === 0 && (
+                                    <div className="text-center py-8 bg-gray-50 rounded">
+                                        <p className="text-gray-500">暂无商品</p>
+                                        <button
+                                            onClick={handleAddProduct}
+                                            className="mt-4 px-4 py-2 text-[#516b55] hover:bg-[#516b55] hover:text-white rounded border border-[#516b55] transition-colors"
+                                        >
+                                            添加商品
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'orders' && (
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            {/* 历史订单列表 */}
+                            <div className="space-y-4">
+                                {/* 这里添加订单列表组件 */}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'new-order' && (
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            {/* 创建订单表单 */}
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="border-r pr-6">
+                                    <h3 className="text-lg font-medium mb-4">选择商品</h3>
+                                    {/* 商品选择列表 */}
+                                </div>
+                                <div className="pl-6">
+                                    <h3 className="text-lg font-medium mb-4">订单详情</h3>
+                                    {/* 订单表单 */}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

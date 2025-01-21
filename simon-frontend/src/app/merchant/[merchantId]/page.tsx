@@ -5,7 +5,12 @@ import { useRouter, useParams } from 'next/navigation'
 import anime from 'animejs'
 import ProductModal from '@/components/merchant/ProductModal'
 import MerchantModal from '@/components/merchant/MerchantModal'
+import CreateEventModal from '@/components/merchant/CreateEventModal'
+import OrderList from '@/components/merchant/OrderList'
+import EventList from '@/components/merchant/EventList'
 import { Product } from '@/model/product'
+import { MerchantOrderItem } from '@/model/order'
+import { Event } from '@/model/event'
 
 interface MerchantInfo {
     merchantId: string;
@@ -16,11 +21,13 @@ interface MerchantInfo {
     products: Product[];
 }
 
-type TabType = 'products' | 'orders' | 'new-order'
+type TabType = 'products' | 'orders' | 'events'
 
 export default function MerchantDetail() {
     const [merchantInfo, setMerchantInfo] = useState<MerchantInfo | null>(null)
     const [products, setProducts] = useState<Product[]>([])
+    const [merchantOrderItems, setMerchantOrderItems] = useState<MerchantOrderItem[]>([])
+    const [events, setEvents] = useState<Event[]>([])
     const [hasChanges, setHasChanges] = useState(false)
     const [loading, setLoading] = useState(true)
     const { getToken } = useAuth()
@@ -28,14 +35,17 @@ export default function MerchantDetail() {
     const params = useParams()
     const merchantId = params?.merchantId as string
     const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+    const [isMerchantModalOpen, setIsMerchantModalOpen] = useState(false)
+    const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | undefined>()
     const [productModalMode, setProductModalMode] = useState<'create' | 'edit'>('create')
-    const [isMerchantModalOpen, setIsMerchantModalOpen] = useState(false)
     const [activeTab, setActiveTab] = useState<TabType>('products')
 
     useEffect(() => {
         if (merchantId) {
             fetchMerchantInfo()
+            fetchOrders()
+            fetchEvents()
         }
     }, [merchantId])
 
@@ -103,6 +113,59 @@ export default function MerchantDetail() {
             console.error('获取商家信息失败:', error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const fetchOrders = async () => {
+        try {
+            const token = await getToken()
+            const response = await fetch(`http://localhost:3001/api/v1/orderItems/merchant/${merchantId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            const data = await response.json()
+            if (data.success) {
+                // 转换数据格式
+                const formattedOrderItems = data.data.map((item: any) => ({
+                    orderItemId: item.orderItemId,
+                    orderId: item.orderId,
+                    userId: item.order.userId,
+                    eventId: item.shoppingEventId,
+                    quantity: item.quantity,
+                    price: Number(item.price),
+                    // 商品信息
+                    product: item.product,
+                    // 活动信息
+                    shoppingEvent: item.shoppingEvent,
+                    // 订单信息
+                    order: item.order,
+                    // 时间信息
+                    createdAt: item.createdAt,
+                    updatedAt: item.updatedAt
+                }))
+                setMerchantOrderItems(formattedOrderItems)
+
+            }
+        } catch (error) {
+            console.error('获取订单列表失败:', error)
+        }
+    }
+
+    const fetchEvents = async () => {
+        try {
+            const token = await getToken()
+            const response = await fetch(`http://localhost:3001/api/v1/events/merchant/${merchantId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            const data = await response.json()
+            if (data.success) {
+                setEvents(data.data)
+            }
+        } catch (error) {
+            console.error('获取团购活动列表失败:', error)
         }
     }
 
@@ -178,6 +241,26 @@ export default function MerchantDetail() {
         })
     }
 
+    const handleEventStatusChange = async (eventId: string, status: Event['status']) => {
+        try {
+            const token = await getToken()
+            const response = await fetch(`http://localhost:3001/api/v1/events/updateEventStatus/${eventId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            })
+
+            if (response.ok) {
+                fetchEvents()
+            }
+        } catch (error) {
+            console.error('更新活动状态失败:', error)
+        }
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen pt-20 px-4 flex items-center justify-center">
@@ -222,6 +305,12 @@ export default function MerchantDetail() {
                             >
                                 编辑店铺
                             </button>
+                            <button
+                                onClick={() => setIsCreateEventModalOpen(true)}
+                                className="px-4 py-2 bg-[#516b55] text-white rounded hover:bg-[#3f523f] transition-colors"
+                            >
+                                创建团购
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -231,8 +320,8 @@ export default function MerchantDetail() {
                     <button
                         onClick={() => handleTabChange('products')}
                         className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'products'
-                                ? 'text-[#516b55]'
-                                : 'text-gray-500 hover:text-[#516b55]'
+                            ? 'text-[#516b55]'
+                            : 'text-gray-500 hover:text-[#516b55]'
                             }`}
                     >
                         商品管理
@@ -241,26 +330,26 @@ export default function MerchantDetail() {
                         )}
                     </button>
                     <button
-                        onClick={() => handleTabChange('orders')}
-                        className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'orders'
-                                ? 'text-[#516b55]'
-                                : 'text-gray-500 hover:text-[#516b55]'
+                        onClick={() => handleTabChange('events')}
+                        className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'events'
+                            ? 'text-[#516b55]'
+                            : 'text-gray-500 hover:text-[#516b55]'
                             }`}
                     >
-                        历史订单
-                        {activeTab === 'orders' && (
+                        团购活动
+                        {activeTab === 'events' && (
                             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#516b55]" />
                         )}
                     </button>
                     <button
-                        onClick={() => handleTabChange('new-order')}
-                        className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'new-order'
-                                ? 'text-[#516b55]'
-                                : 'text-gray-500 hover:text-[#516b55]'
+                        onClick={() => handleTabChange('orders')}
+                        className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'orders'
+                            ? 'text-[#516b55]'
+                            : 'text-gray-500 hover:text-[#516b55]'
                             }`}
                     >
-                        创建订单
-                        {activeTab === 'new-order' && (
+                        历史订单
+                        {activeTab === 'orders' && (
                             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#516b55]" />
                         )}
                     </button>
@@ -270,7 +359,6 @@ export default function MerchantDetail() {
                 <div className="tab-content">
                     {activeTab === 'products' && (
                         <div className="bg-white rounded-lg shadow-md p-6">
-                            {/* 商品列表 */}
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-semibold text-gray-900">商品列表</h2>
                                 <button
@@ -280,7 +368,7 @@ export default function MerchantDetail() {
                                     添加商品
                                 </button>
                             </div>
-
+                            {/* 商品列表 */}
                             <div className="grid gap-4">
                                 {products.map((product, index) => (
                                     <div
@@ -346,28 +434,30 @@ export default function MerchantDetail() {
                         </div>
                     )}
 
-                    {activeTab === 'orders' && (
+                    {activeTab === 'events' && (
                         <div className="bg-white rounded-lg shadow-md p-6">
-                            {/* 历史订单列表 */}
-                            <div className="space-y-4">
-                                {/* 这里添加订单列表组件 */}
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-semibold text-gray-900">团购活动</h2>
+                                <button
+                                    onClick={() => setIsCreateEventModalOpen(true)}
+                                    className="px-4 py-2 bg-[#516b55] text-white rounded hover:bg-[#3f523f] transition-colors"
+                                >
+                                    创建团购
+                                </button>
                             </div>
+                            <EventList
+                                events={events}
+                                onStatusChange={handleEventStatusChange}
+                            />
                         </div>
                     )}
 
-                    {activeTab === 'new-order' && (
+                    {activeTab === 'orders' && (
                         <div className="bg-white rounded-lg shadow-md p-6">
-                            {/* 创建订单表单 */}
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="border-r pr-6">
-                                    <h3 className="text-lg font-medium mb-4">选择商品</h3>
-                                    {/* 商品选择列表 */}
-                                </div>
-                                <div className="pl-6">
-                                    <h3 className="text-lg font-medium mb-4">订单详情</h3>
-                                    {/* 订单表单 */}
-                                </div>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-semibold text-gray-900">历史订单</h2>
                             </div>
+                            <OrderList orderItems={merchantOrderItems} />
                         </div>
                     )}
                 </div>
@@ -395,6 +485,17 @@ export default function MerchantDetail() {
                 }}
                 merchant={merchantInfo}
                 mode="edit"
+            />
+
+            <CreateEventModal
+                isOpen={isCreateEventModalOpen}
+                onClose={() => setIsCreateEventModalOpen(false)}
+                onSuccess={() => {
+                    fetchEvents()
+                    setIsCreateEventModalOpen(false)
+                }}
+                products={products}
+                merchantId={merchantId}
             />
 
             {hasChanges && (

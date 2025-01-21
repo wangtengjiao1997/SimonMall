@@ -1,53 +1,29 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
-import MerchantCard from '@/components/merchant/MerchantCard'
 import SearchBar from '@/components/SearchBar'
 import { useRouter } from 'next/navigation'
-
-interface Product {
-    productId: string;
-    name: string;
-    description: string;
-    price: string;
-    category: string;
-    imageUrl: string;
-    rank: number;
-    createdAt: string;
-    updatedAt: string;
-}
-
-interface Merchant {
-    merchantId: string;
-    userId: string;
-    shopName: string;
-    shopDescription: string;
-    shopStatus: string;
-    shopCategory: string;
-    products: Product[];
-    createdAt: string;
-    updatedAt: string;
-}
+import EventCard from '@/components/merchant/EventCard'
+import { EventWithProducts } from '@/model/event'
 
 export default function ShopPage() {
-    const [merchants, setMerchants] = useState<Merchant[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const { getToken } = useAuth()
-    const router = useRouter()
+    const [events, setEvents] = useState<EventWithProducts[]>([])
 
     useEffect(() => {
-        const fetchMerchants = async () => {
+        const fetchEvents = async () => {
             try {
                 const token = await getToken()
-                const response = await fetch('http://localhost:3001/api/v1/merchants/allMerchants', {
+                const response = await fetch('http://localhost:3001/api/v1/events/getAllEvents', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 })
                 const data = await response.json()
                 if (data.success) {
-                    setMerchants(data.data)
+                    setEvents(data.data)
                 }
             } catch (error) {
                 console.error('获取商家列表失败:', error)
@@ -56,13 +32,14 @@ export default function ShopPage() {
             }
         }
 
-        fetchMerchants()
+        fetchEvents()
     }, [getToken])
 
     // 过滤商家列表
-    const filteredMerchants = merchants.filter(merchant =>
-        merchant.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        merchant.shopDescription.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredEvents = events.filter(event =>
+        event.status === 'active' &&
+        (event.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            event.eventDescription.toLowerCase().includes(searchTerm.toLowerCase()))
     )
 
     if (loading) {
@@ -95,18 +72,19 @@ export default function ShopPage() {
                     />
                 </div>
 
-                {/* 商家列表 */}
-                <div className="grid gap-6">
-                    {filteredMerchants.map((merchant) => (
-                        <MerchantCard
-                            key={merchant.merchantId}
-                            merchant={merchant}
-                            onClick={() => router.push(`/shop/${merchant.merchantId}`)}
-                        />
-                    ))}
-                </div>
+                {/* 团购活动部分 */}
+                {filteredEvents.length > 0 && (
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-semibold text-[#516b55] mb-6">正在进行的团购</h2>
+                        <div className="grid gap-6">
+                            {filteredEvents.map((event) => (
+                                <EventCard key={event.eventId} event={event} />
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-                {filteredMerchants.length === 0 && (
+                {filteredEvents.length === 0 && (
                     <div className="text-center py-12">
                         <p className="text-gray-500">
                             {searchTerm ? '没有找到相关商家' : '暂无商家信息'}

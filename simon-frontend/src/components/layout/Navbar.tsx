@@ -34,7 +34,6 @@ export default function Navbar() {
                     })
 
                     const data = await response.json()
-                    console.log(data)
                     setUserinfo(data.data.user)
                     if (data.success && !data.data.exists) {
                         router.push('/register')

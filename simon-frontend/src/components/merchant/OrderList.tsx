@@ -1,16 +1,15 @@
 'use client'
-import { MerchantOrderItem } from '@/model/order'
+import { DisplayOrderItem } from '@/model/order'
 import { useState, useEffect } from 'react'
 import anime from 'animejs'
 
 interface OrderListProps {
-    orderItems: MerchantOrderItem[];
+    orderItems: DisplayOrderItem[];
 }
 
 
 export default function OrderList({ orderItems }: OrderListProps) {
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
-    console.log(orderItems)
     const handleExpand = (orderId: string) => {
         if (expandedOrderId === orderId) {
             anime({
@@ -45,8 +44,17 @@ export default function OrderList({ orderItems }: OrderListProps) {
                         onClick={() => handleExpand(item.orderItemId)}
                     >
                         <div className="flex justify-between items-center">
+                            <span className={`px-2 py-1 text-sm rounded ${item.status === 'completed'
+                                ? 'bg-green-100 text-green-800'
+                                : item.status === 'pending'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                {item.status === 'completed' ? '已完成' :
+                                    item.status === 'pending' ? '待发货' : '已取消'}
+                            </span>
                             <div>
-                                <p className="font-medium">订单号：{item.orderId}</p>
+                                <p className="font-medium">订单号：{item.order.orderId}</p>
                                 <p className="text-sm text-gray-500 mt-1">
                                     {new Date(item.createdAt).toLocaleString()}
                                 </p>

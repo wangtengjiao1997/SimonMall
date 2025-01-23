@@ -62,9 +62,18 @@ export default function UserMenu() {
                         个人资料
                     </button>
 
+                    {/* 订单历史按钮 */}
+                    <button
+                        onClick={() => router.push('/profile/orders')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 truncate"
+                    >
+                        我的订单
+                        <span className="ml-2 text-xs text-gray-500">查看订单历史</span>
+                    </button>
+
                     <button
                         onClick={() => signOut()}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 truncate"
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 truncate border-t"
                     >
                         退出登录
                     </button>

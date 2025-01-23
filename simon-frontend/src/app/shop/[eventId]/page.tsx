@@ -4,7 +4,7 @@ import { useAuth, useUser } from '@clerk/nextjs'
 import { useParams } from 'next/navigation'
 import { EventWithProducts } from '@/model/event'
 import { MerchantInfo } from '@/model/merchant'
-import { SubmitOrder } from '@/model/order'
+import { OrderItem, SubmitOrder } from '@/model/order'
 import AddressModal, { AddressInfo } from '@/components/shop/AddressModal'
 
 interface CartItem {
@@ -109,7 +109,7 @@ export default function EventDetailPage() {
         try {
             const token = await getToken()
 
-            const orderItems = cart.map(item => {
+            const orderItems: OrderItem[] = cart.map(item => {
                 const eventProduct = event.eventProducts.find(p => p.productId === item.productId)
                 if (!eventProduct) throw new Error('商品不存在')
 

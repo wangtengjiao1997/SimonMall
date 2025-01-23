@@ -9,7 +9,7 @@ import CreateEventModal from '@/components/merchant/CreateEventModal'
 import OrderList from '@/components/merchant/OrderList'
 import EventList from '@/components/merchant/EventList'
 import { Product } from '@/model/product'
-import { MerchantOrderItem } from '@/model/order'
+import { DisplayOrderItem, MerchantOrderItem } from '@/model/order'
 import { Event } from '@/model/event'
 
 interface MerchantInfo {
@@ -26,7 +26,7 @@ type TabType = 'products' | 'orders' | 'events'
 export default function MerchantDetail() {
     const [merchantInfo, setMerchantInfo] = useState<MerchantInfo | null>(null)
     const [products, setProducts] = useState<Product[]>([])
-    const [merchantOrderItems, setMerchantOrderItems] = useState<MerchantOrderItem[]>([])
+    const [displayOrderItems, setDisplayOrderItems] = useState<DisplayOrderItem[]>([])
     const [events, setEvents] = useState<Event[]>([])
     const [hasChanges, setHasChanges] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -126,25 +126,7 @@ export default function MerchantDetail() {
             })
             const data = await response.json()
             if (data.success) {
-                // 转换数据格式
-                const formattedOrderItems = data.data.map((item: any) => ({
-                    orderItemId: item.orderItemId,
-                    orderId: item.orderId,
-                    userId: item.order.userId,
-                    eventId: item.shoppingEventId,
-                    quantity: item.quantity,
-                    price: Number(item.price),
-                    // 商品信息
-                    product: item.product,
-                    // 活动信息
-                    shoppingEvent: item.shoppingEvent,
-                    // 订单信息
-                    order: item.order,
-                    // 时间信息
-                    createdAt: item.createdAt,
-                    updatedAt: item.updatedAt
-                }))
-                setMerchantOrderItems(formattedOrderItems)
+                setDisplayOrderItems(data.data)
 
             }
         } catch (error) {
@@ -457,7 +439,7 @@ export default function MerchantDetail() {
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-semibold text-gray-900">历史订单</h2>
                             </div>
-                            <OrderList orderItems={merchantOrderItems} />
+                            <OrderList orderItems={displayOrderItems} />
                         </div>
                     )}
                 </div>

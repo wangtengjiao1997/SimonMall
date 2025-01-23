@@ -68,3 +68,35 @@ export interface MerchantOrderItem {
     createdAt: string;
     updatedAt: string;
 }
+export interface DisplayOrderItem {
+    orderItemId: string;
+    price: number;
+    quantity: number;
+    eventName: string;
+    eventId: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    product: {
+        productId: string;
+        name: string;
+        description: string;
+        category: string;
+        imageUrl: string;
+    };
+    shoppingEvent: {
+        eventId: string;
+        eventName: string;
+        eventDescription: string;
+        startTime: string;
+        endTime: string;
+        status: string;
+    };
+    order: {
+        orderId: string;
+        recipientName: string;
+        recipientPhone: string;
+        shippingAddress: string;
+    };
+}
+

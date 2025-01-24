@@ -1,10 +1,11 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntity } from './BaseEntity';
 import { Merchant } from './Merchant';
+import { EventProduct } from './EventProduct';
 
 @Entity('shopping_event')
 export class ShoppingEvent extends BaseEntity {
-    @PrimaryColumn({ name: 'event_id', type: 'varchar' })
+    @PrimaryGeneratedColumn('uuid', { name: 'event_id' })
     eventId: string;
 
     @Column({ name: 'merchant_id', type: 'varchar' })
@@ -13,6 +14,9 @@ export class ShoppingEvent extends BaseEntity {
     @ManyToOne(() => Merchant)
     @JoinColumn({ name: 'merchant_id' })
     merchant: Merchant;
+
+    @OneToMany(() => EventProduct, eventProduct => eventProduct.event)
+    eventProducts: EventProduct[];
 
     @Column({ name: 'event_name', type: 'varchar' })
     eventName: string;

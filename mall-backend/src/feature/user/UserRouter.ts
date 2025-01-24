@@ -1,6 +1,6 @@
 import express, { RequestHandler } from 'express';
 import { requireAuth } from '@clerk/express';
-import { checkUserProfile, createUser, deleteUser, getUsersInfo, updateUser } from './UserController';
+import { checkUserProfile, createUser, deleteUser, getUsersInfo, updateUser, getUserInfoByUserId } from './UserController';
 
 const userRouter = express.Router();
 
@@ -10,5 +10,6 @@ userRouter.post('/createUserInfo', requireAuth(), (createUser as unknown) as Req
 userRouter.put('/updateUserInfo', requireAuth(), (updateUser as unknown) as RequestHandler);
 userRouter.delete('/deleteUserInfo', requireAuth(), (deleteUser as unknown) as RequestHandler);
 userRouter.get('/getUserInfo', requireAuth(), (getUsersInfo as unknown) as RequestHandler);
+userRouter.get('/getUserInfoByUserId', requireAuth(), (getUserInfoByUserId as unknown) as RequestHandler);
 
 export default userRouter;

@@ -1,10 +1,11 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntity } from './BaseEntity';
 import { User } from './User';
+import { OrderItem } from './OrderItem';
 
 @Entity('order')
 export class Order extends BaseEntity {
-    @PrimaryColumn({ name: 'order_id', type: 'varchar' })
+    @PrimaryGeneratedColumn('uuid', { name: 'order_id' })
     orderId: string;
 
     @Column({ name: 'user_id', type: 'varchar' })
@@ -17,9 +18,21 @@ export class Order extends BaseEntity {
     @Column({ name: 'total_price', type: 'numeric', precision: 10, scale: 2 })
     totalPrice: number;
 
-    @Column({ name: 'order_status', type: 'integer' })
-    orderStatus: number;
-
     @Column({ name: 'is_deleted', type: 'boolean', default: false })
     isDeleted: boolean;
+
+    @Column({ name: 'status', type: 'varchar' })
+    status: string;
+
+    @Column({ name: 'shipping_address', type: 'varchar' })
+    shippingAddress: string;
+
+    @Column({ name: 'recipient_name', type: 'varchar' })
+    recipientName: string;
+
+    @Column({ name: 'recipient_phone', type: 'varchar' })
+    recipientPhone: string;
+
+    @OneToMany(() => OrderItem, orderItem => orderItem.order)
+    orderItems: OrderItem[];
 }

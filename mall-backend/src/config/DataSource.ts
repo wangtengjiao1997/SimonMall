@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import * as fs from 'fs';
 import { DataSource } from 'typeorm';
-import { User, Merchant, Product, ShoppingEvent, EventProduct, Cart, CartItem, Order, OrderItem } from '../entities';
+import { User, Merchant, Product, ShoppingEvent, SellingProduct, Cart, CartItem, Order, OrderItem, EventProduct } from '../entities';
 
 
 if (fs.existsSync(`.env.${process.env.NODE_ENV}`)) {
@@ -37,6 +37,7 @@ export const AppDataSource = new DataSource({
         Merchant,
         Product,
         ShoppingEvent,
+        SellingProduct,
         EventProduct,
         Cart,
         CartItem,

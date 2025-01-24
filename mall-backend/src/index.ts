@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import cors from 'cors';
-import express from 'express';
+import express, { NextFunction } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { AppDataSource } from './config/DataSource';
@@ -11,6 +11,12 @@ import 'dotenv/config'
 import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node'
 import merchantRouter from './feature/merchant/MerchantRouter';
 import productRouter from './feature/product/ProductRouter';
+import eventRouter from './feature/shoppingEvent/EventRouter';
+import orderRouter from './feature/order/OrderRouter';
+import sellingProductRouter from './feature/sellingProduct/SellingProductRouter';
+import eventProductRouter from './feature/eventProduct/EventProductRouter';
+import { errorHandler } from './middleware/errorHandler';
+import orderItemRouter from './feature/orderItem/OrderItemRouter';
 // 初始化 Express 应用
 const app = express();
 
@@ -29,16 +35,10 @@ app.use(clerkMiddleware())
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/merchants', merchantRouter);
 app.use('/api/v1/products', productRouter);
-
-// 全局错误处理
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error('Unhandled Error:', err);
-    res.status(500).json({
-        error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
-});
-
+app.use('/api/v1/events', eventRouter);
+app.use('/api/v1/orders', orderRouter);
+app.use('/api/v1/eventProducts', eventProductRouter);
+app.use('/api/v1/orderItems', orderItemRouter);
 // 服务器配置
 const PORT = process.env.PORT || process.env.ASB_WEB_PORT || 3001;
 

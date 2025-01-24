@@ -94,3 +94,19 @@ export const getUsersInfoService = async (userId: string) => {
     ]
   });
 };
+
+export const getUserInfoByUserIdService = async (userId: string) => {
+  return await userRepository.findOne({
+    where: { userId },
+    select: [
+      'userId',
+      'username',
+      'email',
+      'role',
+      'phone',
+      'address',
+      'createdAt',
+      'updatedAt'
+    ]
+  });
+};

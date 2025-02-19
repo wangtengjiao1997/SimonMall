@@ -41,6 +41,7 @@ export const createOrderService = async (orderData: SubmitOrder) => {
                 shippingAddress: orderData.shippingAddress,
                 recipientName: orderData.recipientName,
                 recipientPhone: orderData.recipientPhone,
+                answers: orderData.answers,
                 isDeleted: false
             });
 

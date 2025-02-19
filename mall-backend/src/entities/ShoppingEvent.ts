@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMan
 import { BaseEntity } from './BaseEntity';
 import { Merchant } from './Merchant';
 import { EventProduct } from './EventProduct';
+import { EventQuestion } from '../types/event';
 
 @Entity('shopping_event')
 export class ShoppingEvent extends BaseEntity {
@@ -32,4 +33,7 @@ export class ShoppingEvent extends BaseEntity {
 
     @Column({ name: 'end_time', type: 'timestamp' })
     endTime: Date;
+
+    @Column({ name: 'questions', type: 'jsonb', nullable: true })
+    questions: EventQuestion[];
 }

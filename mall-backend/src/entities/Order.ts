@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMan
 import { BaseEntity } from './BaseEntity';
 import { User } from './User';
 import { OrderItem } from './OrderItem';
+import { QuestionAnswer } from '../types/order';
 
 @Entity('order')
 export class Order extends BaseEntity {
@@ -35,4 +36,7 @@ export class Order extends BaseEntity {
 
     @OneToMany(() => OrderItem, orderItem => orderItem.order)
     orderItems: OrderItem[];
+
+    @Column({ name: 'answers', type: 'jsonb', nullable: true })
+    answers: QuestionAnswer[];
 }

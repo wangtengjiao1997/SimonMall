@@ -15,7 +15,8 @@ export const createEventService = async (eventData: CreateEventData) => {
                 eventDescription: eventData.eventDescription,
                 startTime: new Date(eventData.startTime),
                 endTime: new Date(eventData.endTime),
-                status: eventData.status
+                status: eventData.status,
+                questions: eventData.questions || [] // 保存问题
             });
 
             const savedEvent = await transactionalEntityManager.save(event);
@@ -48,11 +49,7 @@ export const createEventService = async (eventData: CreateEventData) => {
             stack: error.stack,
             data: eventData
         });
-        if (error instanceof Error) {
-            throw error; // 直接抛出原始错误
-        } else {
-            throw new Error('未知错误');
-        }
+        throw error;
     }
 };
 

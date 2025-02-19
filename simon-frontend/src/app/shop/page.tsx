@@ -22,6 +22,7 @@ export default function ShopPage() {
                     }
                 })
                 const data = await response.json()
+                console.log(data)
                 if (data.success) {
                     setEvents(data.data)
                 }

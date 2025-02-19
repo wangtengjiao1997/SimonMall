@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { Product } from '@/model/product'
 import anime from 'animejs'
+import { QuestionType, EventQuestion, QuestionOption } from '@/model/event'
 
 interface SelectedProduct extends Product {
     eventPrice: number;
@@ -36,6 +37,14 @@ export default function CreateEventModal({
     })
     const [loading, setLoading] = useState(false)
     const { getToken } = useAuth()
+    const [questions, setQuestions] = useState<EventQuestion[]>([])
+    const [showQuestionForm, setShowQuestionForm] = useState(false)
+    const [currentQuestion, setCurrentQuestion] = useState<Partial<EventQuestion>>({
+        type: QuestionType.SINGLE_CHOICE,
+        title: '',
+        required: true,
+        options: []
+    })
 
     const handleAddProduct = (product: Product) => {
         if (!selectedProducts.find(p => p.productId === product.productId)) {
@@ -69,6 +78,63 @@ export default function CreateEventModal({
         )
     }
 
+    const handleAddQuestion = () => {
+        setShowQuestionForm(true)
+        setCurrentQuestion({
+            type: QuestionType.SINGLE_CHOICE,
+            title: '',
+            required: true,
+            options: []
+        })
+    }
+
+    const handleQuestionSubmit = () => {
+        if (!currentQuestion.title) return
+
+        const newQuestion: EventQuestion = {
+            title: currentQuestion.title,
+            type: currentQuestion.type!,
+            required: currentQuestion.required!,
+            options: currentQuestion.type !== QuestionType.TEXT
+                ? currentQuestion.options || []
+                : undefined
+        }
+
+        setQuestions([...questions, newQuestion])
+        setShowQuestionForm(false)
+        setCurrentQuestion({
+            type: QuestionType.SINGLE_CHOICE,
+            title: '',
+            required: true,
+            options: []
+        })
+    }
+
+    const handleAddOption = () => {
+        setCurrentQuestion(prev => ({
+            ...prev,
+            options: [...(prev.options || []), '']
+        }))
+    }
+
+    const handleOptionChange = (index: number, content: string) => {
+        setCurrentQuestion(prev => ({
+            ...prev,
+            options: prev.options?.map((opt, i) => i === index ? content : opt)
+        }))
+    }
+
+    const handleRemoveOption = (index: number) => {
+        setCurrentQuestion(prev => ({
+            ...prev,
+            options: prev.options?.filter((_, i) => i !== index)
+        }))
+    }
+
+    const handleRemoveQuestion = (index: number) => {
+        setQuestions(questions.filter((_, i) => i !== index))
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (selectedProducts.length === 0) return
@@ -89,6 +155,12 @@ export default function CreateEventModal({
                         price: p.eventPrice,
                         quantity: p.eventQuantity,
                         limitPerUser: p.limitPerUser
+                    })),
+                    questions: questions.map(q => ({
+                        title: q.title,
+                        type: q.type,
+                        required: q.required,
+                        options: q.options
                     }))
                 })
             })
@@ -288,6 +360,160 @@ export default function CreateEventModal({
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {/* 问题管理部分 */}
+                    <div className="mt-6 border-t pt-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium">问卷设置</h3>
+                            <button
+                                type="button"
+                                onClick={handleAddQuestion}
+                                className="text-sm text-[#516b55] hover:text-[#3f523f]"
+                            >
+                                添加问题
+                            </button>
+                        </div>
+
+                        {/* 问题列表 */}
+                        <div className="space-y-4">
+                            {questions.map((question, index) => (
+                                <div key={index} className="p-4 border rounded-lg">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="font-medium">{question.title}</h4>
+                                            <p className="text-sm text-gray-500">
+                                                {question.type === QuestionType.SINGLE_CHOICE ? '单选题' :
+                                                 question.type === QuestionType.MULTIPLE_CHOICE ? '多选题' : '问答题'}
+                                                {question.required && ' (必填)'}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveQuestion(index)}
+                                            className="text-red-500 hover:text-red-700"
+                                        >
+                                            删除
+                                        </button>
+                                    </div>
+                                    {question.options && (
+                                        <div className="mt-2 space-y-1">
+                                            {question.options.map((option, optIndex) => (
+                                                <div key={optIndex} className="text-sm text-gray-600">
+                                                    {optIndex + 1}. {option}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* 添加问题表单 */}
+                        {showQuestionForm && (
+                            <div className="mt-4 p-4 border rounded-lg">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            问题类型
+                                        </label>
+                                        <select
+                                            value={currentQuestion.type}
+                                            onChange={(e) => setCurrentQuestion(prev => ({
+                                                ...prev,
+                                                type: e.target.value as QuestionType
+                                            }))}
+                                            className="w-full p-2 border rounded"
+                                        >
+                                            <option value={QuestionType.SINGLE_CHOICE}>单选题</option>
+                                            <option value={QuestionType.MULTIPLE_CHOICE}>多选题</option>
+                                            <option value={QuestionType.TEXT}>问答题</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            问题标题
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={currentQuestion.title}
+                                            onChange={(e) => setCurrentQuestion(prev => ({
+                                                ...prev,
+                                                title: e.target.value
+                                            }))}
+                                            className="w-full p-2 border rounded"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={currentQuestion.required}
+                                            onChange={(e) => setCurrentQuestion(prev => ({
+                                                ...prev,
+                                                required: e.target.checked
+                                            }))}
+                                            className="mr-2"
+                                        />
+                                        <label className="text-sm text-gray-700">必填</label>
+                                    </div>
+
+                                    {currentQuestion.type !== QuestionType.TEXT && (
+                                        <div>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className="text-sm font-medium text-gray-700">
+                                                    选项
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddOption}
+                                                    className="text-sm text-[#516b55] hover:text-[#3f523f]"
+                                                >
+                                                    添加选项
+                                                </button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {currentQuestion.options?.map((option, index) => (
+                                                    <div key={index} className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={option}
+                                                            onChange={(e) => handleOptionChange(index, e.target.value)}
+                                                            className="flex-1 p-2 border rounded"
+                                                            placeholder="选项内容"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveOption(index)}
+                                                            className="text-red-500 hover:text-red-700"
+                                                        >
+                                                            删除
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowQuestionForm(false)}
+                                            className="px-4 py-2 text-gray-500 hover:text-gray-700"
+                                        >
+                                            取消
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleQuestionSubmit}
+                                            className="px-4 py-2 bg-[#516b55] text-white rounded hover:bg-[#3f523f]"
+                                        >
+                                            添加问题
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-end gap-2 mt-6">

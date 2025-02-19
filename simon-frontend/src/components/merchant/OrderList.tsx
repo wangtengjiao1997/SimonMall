@@ -110,6 +110,31 @@ export default function OrderList({ orderItems }: OrderListProps) {
                                     <p className="text-gray-600">地址：{item.order.shippingAddress}</p>
                                 </div>
                             )}
+
+                            {/* 问答信息 */}
+                            {item.order.answers && item.order.answers.length > 0 && (
+                                <div className="border-t pt-4">
+                                    <h4 className="font-medium mb-2">问卷信息</h4>
+                                    <div className="space-y-2">
+                                        {item.order.answers.map((answer, index) => (
+                                            <div key={index} className="bg-gray-50 p-3 rounded">
+                                                <p className="text-gray-700 font-medium mb-1">
+                                                    {answer.question}
+                                                </p>
+                                                <p className="text-gray-600">
+                                                    {answer.type === 'text' ? (
+                                                        answer.answer as string
+                                                    ) : Array.isArray(answer.answer) ? (
+                                                        answer.answer.join('、')
+                                                    ) : (
+                                                        answer.answer
+                                                    )}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

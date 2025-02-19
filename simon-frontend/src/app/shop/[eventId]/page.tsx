@@ -6,6 +6,7 @@ import { EventWithProducts } from '@/model/event'
 import { MerchantInfo } from '@/model/merchant'
 import { OrderItem, SubmitOrder } from '@/model/order'
 import AddressModal, { AddressInfo } from '@/components/shop/AddressModal'
+import { QuestionType, QuestionAnswer } from '@/model/event'
 
 interface CartItem {
     productId: string;
@@ -23,6 +24,7 @@ export default function EventDetailPage() {
     const eventId = params?.eventId as string
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
     const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null)
+    const [answers, setAnswers] = useState<QuestionAnswer[]>([])
 
     useEffect(() => {
         fetchEventDetail()
@@ -43,6 +45,7 @@ export default function EventDetailPage() {
                 }
             })
             const data = await response.json()
+            console.log('获取活动详情:', data)
             if (data.success) {
                 setEvent(data.data)
             }
@@ -103,6 +106,20 @@ export default function EventDetailPage() {
         await submitOrder(info)
     }
 
+    const handleAnswerChange = (question: string, type: QuestionType, value: string | string[]) => {
+        setAnswers(prev => {
+            const existingIndex = prev.findIndex(a => a.question === question)
+            if (existingIndex >= 0) {
+                return prev.map((a, index) =>
+                    index === existingIndex
+                        ? { ...a, answer: value }
+                        : a
+                )
+            }
+            return [...prev, { question, type, answer: value }]
+        })
+    }
+
     const submitOrder = async (info: AddressInfo) => {
         if (!user || cart.length === 0 || !event) return
 
@@ -123,23 +140,22 @@ export default function EventDetailPage() {
 
             const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
-            const submitOrder: SubmitOrder = {
-                eventId: event.eventId,
-                userId: user.id,
-                totalAmount,
-                items: orderItems,
-                recipientName: info.name,
-                recipientPhone: info.phone,
-                shippingAddress: info.address
-            }
-
             const response = await fetch('http://localhost:3001/api/v1/orders/createOrder', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(submitOrder)
+                body: JSON.stringify({
+                    eventId: event.eventId,
+                    userId: user.id,
+                    totalAmount,
+                    items: orderItems,
+                    recipientName: info.name,
+                    recipientPhone: info.phone,
+                    shippingAddress: info.address,
+                    answers
+                })
             })
 
             const data = await response.json()
@@ -245,6 +261,98 @@ export default function EventDetailPage() {
                         })}
                     </div>
                 </div>
+
+                {/* 问卷部分 */}
+                {event?.questions && event.questions.length > 0 && (
+                    <div className="max-w-4xl mx-auto mt-8 bg-white rounded-lg shadow-md p-6">
+                        <h2 className="text-xl font-semibold text-[#516b55] mb-6">问卷调查</h2>
+                        <div className="space-y-6">
+                            {event.questions.map((question, index) => (
+                                <div key={index} className="border-b pb-4 last:border-b-0">
+                                    <div className="flex items-start gap-2 mb-2">
+                                        <span className="text-[#516b55] font-medium">
+                                            {index + 1}.
+                                        </span>
+                                        <div className="flex-1">
+                                            <p className="font-medium text-gray-800">
+                                                {question.title}
+                                                {question.required && (
+                                                    <span className="text-red-500 ml-1">*</span>
+                                                )}
+                                            </p>
+
+                                            {/* 单选题 */}
+                                            {question.type === QuestionType.SINGLE_CHOICE && (
+                                                <div className="mt-2 space-y-2">
+                                                    {question.options?.map((option, optIndex) => (
+                                                        <label key={optIndex} className="flex items-center gap-2">
+                                                            <input
+                                                                type="radio"
+                                                                name={`question-${index}`}
+                                                                value={option}
+                                                                onChange={(e) => handleAnswerChange(
+                                                                    question.title,
+                                                                    question.type,
+                                                                    e.target.value
+                                                                )}
+                                                                required={question.required}
+                                                                className="text-[#516b55] focus:ring-[#516b55]"
+                                                            />
+                                                            <span className="text-gray-700">{option}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* 多选题 */}
+                                            {question.type === QuestionType.MULTIPLE_CHOICE && (
+                                                <div className="mt-2 space-y-2">
+                                                    {question.options?.map((option, optIndex) => (
+                                                        <label key={optIndex} className="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                value={option}
+                                                                onChange={(e) => {
+                                                                    const answer = answers.find(a => a.question === question.title)
+                                                                    const currentAnswers = (answer?.answer as string[]) || []
+                                                                    const newAnswers = e.target.checked
+                                                                        ? [...currentAnswers, option]
+                                                                        : currentAnswers.filter(a => a !== option)
+                                                                    handleAnswerChange(
+                                                                        question.title,
+                                                                        question.type,
+                                                                        newAnswers
+                                                                    )
+                                                                }}
+                                                                className="text-[#516b55] focus:ring-[#516b55]"
+                                                            />
+                                                            <span className="text-gray-700">{option}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* 问答题 */}
+                                            {question.type === QuestionType.TEXT && (
+                                                <textarea
+                                                    className="mt-2 w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#516b55]"
+                                                    rows={3}
+                                                    placeholder="请输入您的回答..."
+                                                    onChange={(e) => handleAnswerChange(
+                                                        question.title,
+                                                        question.type,
+                                                        e.target.value
+                                                    )}
+                                                    required={question.required}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* 下单按钮 */}
                 {cart.length > 0 && (

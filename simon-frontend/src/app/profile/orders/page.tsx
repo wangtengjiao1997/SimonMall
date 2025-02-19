@@ -119,6 +119,31 @@ export default function OrderHistoryPage() {
                                 <p className="text-sm text-gray-600 mt-1">
                                     收货地址：{orderItem.order.shippingAddress}
                                 </p>
+
+                                {/* 问答信息 */}
+                                {orderItem.order.answers && orderItem.order.answers.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t">
+                                        <h4 className="text-sm font-medium text-gray-700 mb-2">问卷回答</h4>
+                                        <div className="space-y-2">
+                                            {orderItem.order.answers.map((answer, index) => (
+                                                <div key={index} className="bg-gray-50 p-3 rounded">
+                                                    <p className="text-sm text-gray-700 font-medium mb-1">
+                                                        {answer.question}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                        {answer.type === 'text' ? (
+                                                            answer.answer as string
+                                                        ) : Array.isArray(answer.answer) ? (
+                                                            answer.answer.join('、')
+                                                        ) : (
+                                                            answer.answer
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

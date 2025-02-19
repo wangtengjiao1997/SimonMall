@@ -1,3 +1,5 @@
+import { OrderQuestionAnswer } from './event'
+
 export interface OrderItem {
     productId: string;
     eventId: string;
@@ -17,10 +19,11 @@ export interface SubmitOrder {
     eventId: string;
     userId: string;
     totalAmount: number;
-    shippingAddress: string;
+    items: OrderItemData[];
     recipientName: string;
     recipientPhone: string;
-    items: OrderItem[];
+    shippingAddress: string;
+    answers: OrderQuestionAnswer[];
 }
 
 export interface MerchantOrderItem {
